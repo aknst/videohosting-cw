@@ -12,7 +12,6 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
     role: UserRole = Field(default=UserRole.USER)
-    avatar_url: str | None = Field(default=None, max_length=255)
     bio: str | None = Field(default=None, max_length=500)
 
 

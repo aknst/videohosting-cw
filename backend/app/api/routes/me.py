@@ -2,12 +2,12 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app import crud
 from app.api.deps import (
     CurrentUser,
     SessionDep,
 )
 from app.core.security import get_password_hash, verify_password
+from app.crud import user_crud
 from app.schemas import (
     Message,
     UpdatePassword,
@@ -27,7 +27,9 @@ def update_user_me(
     """
 
     if user_in.email:
-        existing_user = crud.get_user_by_email(session=session, email=user_in.email)
+        existing_user = user_crud.get_user_by_email(
+            session=session, email=user_in.email
+        )
         if existing_user and existing_user.id != current_user.id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"

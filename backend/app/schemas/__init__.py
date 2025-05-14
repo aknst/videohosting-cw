@@ -1,10 +1,3 @@
-from app.schemas.item import (
-    ItemBase,
-    ItemCreate,
-    ItemPublic,
-    ItemsPublic,
-    ItemUpdate,
-)
 from app.schemas.token import Message, NewPassword, Token, TokenPayload
 from app.schemas.user import (
     UpdatePassword,
@@ -33,11 +26,6 @@ __all__ = [
     "UpdatePassword",
     "UserPublic",
     "UsersPublic",
-    "ItemBase",
-    "ItemCreate",
-    "ItemUpdate",
-    "ItemPublic",
-    "ItemsPublic",
     "VideoBase",
     "VideoCreate",
     "VideoUpdate",

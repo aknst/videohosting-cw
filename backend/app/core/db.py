@@ -1,7 +1,7 @@
 from sqlmodel import Session, create_engine, select
 
-from app import crud
 from app.core.config import settings
+from app.crud import user_crud
 from app.models import User
 from app.schemas import UserCreate
 
@@ -31,4 +31,4 @@ def init_db(session: Session) -> None:
             password=settings.FIRST_SUPERUSER,
             is_superuser=True,
         )
-        user = crud.create_user(session=session, user_create=user_in)
+        user = user_crud.create_user(session=session, user_create=user_in)

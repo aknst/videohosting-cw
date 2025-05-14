@@ -1,5 +1,6 @@
 import secrets
 import warnings
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -90,6 +91,25 @@ class Settings(BaseSettings):
     @property
     def emails_enabled(self) -> bool:
         return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
+
+    # --- Celery / Redis ---
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+
+    # очередь задач
+    @computed_field
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
+    # где сохранять результаты (если нужно)
+    @computed_field
+    @property
+    def CELERY_RESULT_BACKEND(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/1"
+
+    # куда сохранять исходные/промежуточные upload'ы
+    UPLOAD_DIR: Path = Path("uploads") / "videos"
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"
     FIRST_SUPERUSER: EmailStr

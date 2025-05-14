@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.core import security
 from app.core.config import settings
 from app.core.security import get_password_hash
+from app.crud import user_crud
 from app.schemas import Message, NewPassword, Token, UserPublic
 from app.utils import (
     generate_password_reset_token,
@@ -26,9 +26,15 @@ def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
     """
-    OAuth2 compatible token login, get an access token for future requests
+    OAuth2-совместимый вход в систему.
+
+    Принимает email (в поле username) и пароль, проверяет пользователя, и в случае успешной авторизации возвращает JWT-токен доступа (access token), необходимый для дальнейших защищённых запросов к API.
+
+    Ошибки:
+    - 400: Неверный email или пароль.
+    - 400: Пользователь неактивен.
     """
-    user = crud.authenticate(
+    user = user_crud.authenticate(
         session=session, email=form_data.username, password=form_data.password
     )
     if not user:
@@ -46,7 +52,15 @@ def login_access_token(
 @router.post("/login/test-token", response_model=UserPublic)
 def test_token(current_user: CurrentUser) -> Any:
     """
-    Test access token
+    Проверка действительности токена доступа.
+
+    Этот эндпоинт возвращает текущего авторизованного пользователя, если передан действующий токен. Используется для отладки или проверки работоспособности авторизации.
+
+    Ответ:
+    - Полная информация о текущем пользователе.
+
+    Ошибки:
+    - 401: Недействительный токен или отсутствие авторизации.
     """
     return current_user
 
@@ -54,9 +68,14 @@ def test_token(current_user: CurrentUser) -> Any:
 @router.post("/password-recovery/{email}")
 def recover_password(email: str, session: SessionDep) -> Message:
     """
-    Password Recovery
+    Инициирует процесс восстановления пароля.
+
+    Отправляет письмо с ссылкой на сброс пароля на указанный email, если такой пользователь существует. Внутри генерируется токен восстановления и формируется HTML-письмо с инструкцией.
+
+    Ошибки:
+    - 404: Пользователь с таким email не найден.
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_crud.get_user_by_email(session=session, email=email)
 
     if not user:
         raise HTTPException(
@@ -78,12 +97,19 @@ def recover_password(email: str, session: SessionDep) -> Message:
 @router.post("/reset-password/")
 def reset_password(session: SessionDep, body: NewPassword) -> Message:
     """
-    Reset password
+    Сброс пароля по токену восстановления.
+
+    Принимает новый пароль и токен восстановления, проверяет его валидность, и если всё верно — обновляет пароль пользователя. Только для активных пользователей.
+
+    Ошибки:
+    - 400: Недействительный токен.
+    - 404: Пользователь не найден.
+    - 400: Пользователь неактивен.
     """
     email = verify_password_reset_token(token=body.token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_crud.get_user_by_email(session=session, email=email)
     if not user:
         raise HTTPException(
             status_code=404,
@@ -105,9 +131,17 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
 )
 def recover_password_html_content(email: str, session: SessionDep) -> Any:
     """
-    HTML Content for Password Recovery
+    Возвращает HTML-содержимое письма для восстановления пароля.
+
+    Полезно для предварительного просмотра шаблона письма. Отправляет HTML-ответ с тем же содержимым, что используется при отправке email при восстановлении пароля.
+
+    Доступен только для аутентифицированных суперпользователей.
+
+    Ошибки:
+    - 404: Пользователь не найден.
+    - 403/401: Отказ в доступе при отсутствии прав суперпользователя.
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_crud.get_user_by_email(session=session, email=email)
 
     if not user:
         raise HTTPException(

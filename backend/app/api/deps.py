@@ -68,7 +68,7 @@ def required_role(required_role_enum: UserRole):
         if user_level < required_level:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Недостаточно прав для выполнения операции",
+                detail="Insufficient permissions to perform the operation",
             )
 
         return current_user
