@@ -34,7 +34,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 )
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
-    Retrieve users.
+    Получение списка пользователей.
     """
 
     count_statement = select(func.count()).select_from(User)
@@ -51,7 +51,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 )
 def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
-    Create new user.
+    Создание нового пользователя.
     """
     user = user_crud.get_user_by_email(session=session, email=user_in.email)  # noqa: F821
     if user:
@@ -76,7 +76,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
 @router.post("/signup", response_model=UserPublic)
 def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     """
-    Create new user without the need to be logged in.
+    Регистрация нового пользователя.
     """
     user = user_crud.get_user_by_email(session=session, email=user_in.email)
     if user:
@@ -94,7 +94,7 @@ def read_user_by_id(
     id: uuid.UUID, session: SessionDep, current_user: CurrentUser
 ) -> Any:
     """
-    Get a specific user by id.
+    Получение пользователя по ID.
     """
     user = session.get(User, id)
     if user == current_user:

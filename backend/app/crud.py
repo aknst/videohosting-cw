@@ -68,7 +68,7 @@ class VideoCrud:
         self, *, session: Session, video_in: VideoCreate, owner_id: uuid.UUID
     ) -> Video:
         """
-        Создает новое видео, обрабатывает теги.
+        Создает новое видео.
         """
         video = Video(
             id=uuid.uuid4(),
@@ -129,20 +129,18 @@ class VideoCrud:
         viewer_id: uuid.UUID | None,
     ) -> tuple[list[Video], int]:
         """
-        Return (videos, total_count) applying:
-         - category filter
-         - case‐insensitive substring search on title/description
-         - if viewer_id is set: only videos whose owner_id is followed by viewer_id
-         - ordering by created_at desc (new) or asc (old)
-         - pagination via skip/limit
+        Возвращает (видео, общее количество), применяя:
+         - фильтр по категориям
+         - поиск подстрок по названию/описанию без учета регистра
+         - если задан viewer_id: только видео, за owner_id которых следует viewer_id
+         - упорядочение по значению created_at desc (новый) или asc (старый)
+         - разбивка на страницы с помощью пропуска/ограничения
         """
         stmt = select(Video)
 
-        # 1) category filter
         if category_id:
             stmt = stmt.where(Video.category_id == category_id)
 
-        # 2) search filter
         if search:
             pattern = f"%{search}%"
             stmt = stmt.where(
@@ -152,7 +150,6 @@ class VideoCrud:
                 )
             )
 
-        # 3) only subscriptions → join UserFollowerLink
         if viewer_id:
             from .models import UserFollowerLink  # adjust import
 
@@ -160,14 +157,11 @@ class VideoCrud:
                 UserFollowerLink, Video.owner_id == UserFollowerLink.user_id
             ).where(UserFollowerLink.follower_id == viewer_id)
 
-        # 4) count total before pagination
         count = session.exec(select(func.count()).select_from(stmt.subquery())).one()
 
-        # 5) ordering
         order = desc(Video.created_at) if sort_desc else asc(Video.created_at)
         stmt = stmt.order_by(order)
 
-        # 6) pagination
         stmt = stmt.offset(skip).limit(limit)
 
         videos = session.exec(stmt).all()

@@ -135,10 +135,10 @@ def get_videos_list(
     search: str | None = Query(None, min_length=1),
 ) -> Any:
     """
-    List videos with filters:
-    - sort=new|old       → by created_at desc/asc
-    - category_id=<uuid> → only that category
-    - search=<text>      → case‐insensitive substring in title or description
+    Список видео с фильтрами:
+    - сортировка=новые|старые → по созданным_ат desc/asc
+    - идентификатор_категории=<uuid> → только для этой категории
+    - поиск=<текст> → подстрока без учета регистра в названии или описании
     """
 
     videos, count = video_crud.get_videos(
@@ -163,9 +163,9 @@ def get_feed(
     sort: str = Query("new", regex="^(new|old)$"),
 ) -> Any:
     """
-    Get the current user's feed: videos by authors they follow.
-    - sort=new|old → newest first or oldest first
-    - pagination via skip & limit
+    Просматривайте ленту текущих пользователей: видео по авторам, на которых они подписаны.
+    - сортировка= новые| старые → самые новые первыми или самые старые первыми
+    - разбивка на страницы с помощью пропуска и ограничения
     """
 
     videos, count = video_crud.get_videos(
